@@ -1,11 +1,9 @@
 import os
-import pymongo
 from pprint import pprint
-import gensim
+
+import pymongo
 from gensim import corpora, models, similarities
 from spacy_preprocessing.preprocess import Preprocess
-
-import numpy as np
 
 print(os.environ['POLICE_REPORTS_MONGO_URI'])
 
@@ -24,16 +22,16 @@ reports = [report['text_pre_processed_v1'] for report in items]
 # reports = [report['text_pre_processed_v1'] for report in collection.find()]
 # pprint.pprint(reports)
 
-dict = corpora.Dictionary(reports)
+dictionary = corpora.Dictionary(reports)
 
 # print(dict.token2id)
 
-corpus = [dict.doc2bow(report) for report in reports]
+corpus = [dictionary.doc2bow(report) for report in reports]
 
 # corpus_report = [corpus[7]]
 # pprint.pprint(corpus)
 
-lsi = models.LsiModel(corpus, num_topics=10, id2word=dict)
+lsi = models.LsiModel(corpus, num_topics=10, id2word=dictionary)
 # print(lsi)
 
 index = similarities.MatrixSimilarity(lsi[corpus])
@@ -46,7 +44,7 @@ search_term = "auto unfall frau"
 preprocess = Preprocess(search_term)
 search_term_preprocessed = preprocess.preprocess(sentence_split=False, with_pos=False)
 # print(search_term_preprocessed)
-search_term_bow = dict.doc2bow(search_term_preprocessed)
+search_term_bow = dictionary.doc2bow(search_term_preprocessed)
 search_term_lsi = lsi[search_term_bow]
 # print(search_term_lsi)
 
