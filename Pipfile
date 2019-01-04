@@ -8,6 +8,8 @@ numpy = "*"
 gensim = "*"
 spacy-german-preprocess = "*"
 pymongo = "*"
+pyldavis = "*"
+jupyter = "*"
 
 [dev-packages]
 

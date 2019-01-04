@@ -1,60 +1,31 @@
-import os
-import pymongo
 from pprint import pprint
 import gensim
 from gensim import corpora, models, similarities
+from gensim.models import LdaModel
 from spacy_preprocessing.preprocess import Preprocess
 
 import numpy as np
+import pickle
 
-print(os.environ['POLICE_REPORTS_MONGO_URI'])
+blacklist = ['polizei', 'polizist', 'beamter', 'nr.', 'berlin', 'uhr', 'polizeimeldung',
+             'nicht', 'jahr', 'jährige', 'jährig', 'jähriger', 'polizeiliche', 'polizeilich', '2015', '2016',
+             '2014', '2017', '2018', 'polizeibeamter', '-', '  ', ' ', '   ', '    ']
 
-client = pymongo.MongoClient(os.environ['POLICE_REPORTS_MONGO_URI'])
+items = pickle.load(open('./data/items.pkl', 'rb'))
+data = [report['text_pre_processed_v1'] for report in items]
 
-db = client[os.environ['POLICE_REPORTS_MONGO_DATABASE']]
-# print(db)
+clean_data = []
+for doc in data:
+    clean_data.append([word for word in doc if word not in blacklist])
 
-collection = db[os.environ['POLICE_REPORTS_MONGO_COLLECTION']]
-# print(collection)
-# pprint.pprint(collection.find_one())
+id2word = corpora.Dictionary(clean_data)
+# pprint(list(id2word.items())[0:20])
+corpus = [id2word.doc2bow(doc) for doc in clean_data]
+# pprint(corpus[0:10])
 
-items = [item for item in collection.find().limit(10000)]
-texts = [report['text'] for report in items]
-reports = [report['text_pre_processed_v1'] for report in items]
-# reports = [report['text_pre_processed_v1'] for report in collection.find()]
-# pprint.pprint(reports)
+# Human readable format of corpus (term-frequency)
+# pprint([[(id2word[id], freq) for id, freq in cp] for cp in corpus[1:2]])
 
-dictionary = corpora.Dictionary(reports)
-
-# print(dict.token2id)
-
-corpus = [dictionary.doc2bow(report) for report in reports]
-
-# corpus_report = [corpus[7]]
-# pprint.pprint(corpus)
-
-lsi = models.LsiModel(corpus, num_topics=10, id2word=dictionary)
-# print(lsi)
-
-index = similarities.MatrixSimilarity(lsi[corpus])
-# print(index.get_similarities())
-
-# pprint(len(lsi.get_topics()[0]))
-# pprint(lsi.print_topics())
-
-search_term = "auto unfall frau"
-preprocess = Preprocess(search_term)
-search_term_preprocessed = preprocess.preprocess(sentence_split=False, with_pos=False)
-# print(search_term_preprocessed)
-search_term_bow = dictionary.doc2bow(search_term_preprocessed)
-search_term_lsi = lsi[search_term_bow]
-# print(search_term_lsi)
-
-sims = index[search_term_lsi]
-# max = np.argmax(sims)
-# print(max)
-# print(texts[max])
-
-similarity_list = list(zip(range(len(sims)), sims, texts))
-similarity_list.sort(key=lambda x: x[1], reverse=True)
-pprint(similarity_list[:10])
+# build a LDA model
+lda_model = LdaModel(corpus=corpus, id2word=id2word, num_topics=10, passes=15, alpha=1, eta=1)
+pprint(lda_model.print_topics())

@@ -5,33 +5,26 @@ import pymongo
 from gensim import corpora, models, similarities
 from spacy_preprocessing.preprocess import Preprocess
 
-print(os.environ['POLICE_REPORTS_MONGO_URI'])
+import pickle
+import numpy as np
 
-client = pymongo.MongoClient(os.environ['POLICE_REPORTS_MONGO_URI'])
+items = pickle.load(open('./data/items.pkl', 'rb'))
 
-db = client[os.environ['POLICE_REPORTS_MONGO_DATABASE']]
-# print(db)
-
-collection = db[os.environ['POLICE_REPORTS_MONGO_COLLECTION']]
-# print(collection)
-# pprint.pprint(collection.find_one())
-
-items = [item for item in collection.find().limit(10000)]
 texts = [report['text'] for report in items]
 reports = [report['text_pre_processed_v1'] for report in items]
 # reports = [report['text_pre_processed_v1'] for report in collection.find()]
 # pprint.pprint(reports)
 
-dictionary = corpora.Dictionary(reports)
+reports_dict = corpora.Dictionary(reports)
 
 # print(dict.token2id)
 
-corpus = [dictionary.doc2bow(report) for report in reports]
+corpus = [reports_dict.doc2bow(report) for report in reports]
 
 # corpus_report = [corpus[7]]
 # pprint.pprint(corpus)
 
-lsi = models.LsiModel(corpus, num_topics=10, id2word=dictionary)
+lsi = models.LsiModel(corpus, num_topics=10, id2word=reports_dict)
 # print(lsi)
 
 index = similarities.MatrixSimilarity(lsi[corpus])
@@ -44,7 +37,7 @@ search_term = "auto unfall frau"
 preprocess = Preprocess(search_term)
 search_term_preprocessed = preprocess.preprocess(sentence_split=False, with_pos=False)
 # print(search_term_preprocessed)
-search_term_bow = dictionary.doc2bow(search_term_preprocessed)
+search_term_bow = reports_dict.doc2bow(search_term_preprocessed)
 search_term_lsi = lsi[search_term_bow]
 # print(search_term_lsi)
 
