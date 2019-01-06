@@ -10,6 +10,7 @@ spacy-german-preprocess = "*"
 pymongo = "*"
 pyldavis = "*"
 jupyter = "*"
+tabulate = "*"
 
 [dev-packages]
 
