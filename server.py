@@ -1,14 +1,15 @@
 from flask import Flask, jsonify, request
 from search.searches import fulltext_search, lda_search, lsi_search
+from flask_cors import CORS
 
 app = Flask(__name__)
-
+CORS(app)
 
 @app.route('/', methods=['POST'])
 def root():
     search_mode = 'lda' if not request.json['mode'] else request.json['mode']
     query = '' if not request.json['query'] else request.json['query']
-    max_results = 25 if not request.json['query'] else int(request.json['maxResults'])
+    max_results = 25 if not request.json['maxResults'] else int(request.json['maxResults'])
 
     search = {
         'lda': lda_search,

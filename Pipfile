@@ -12,6 +12,7 @@ pyldavis = "*"
 jupyter = "*"
 tabulate = "*"
 flask = "*"
+flask-cors = "*"
 
 [dev-packages]
 
