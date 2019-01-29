@@ -2,8 +2,12 @@ import os
 import pickle
 import pymongo
 
-client = pymongo.MongoClient(os.environ['POLICE_REPORTS_MONGO_URI'])
-db = client[os.environ['POLICE_REPORTS_MONGO_DATABASE']]
-collection = db[os.environ['POLICE_REPORTS_MONGO_COLLECTION']]
-items = [item for item in collection.find()]
-pickle.dump(items, open('./data/items.pkl', 'wb'))
+# client = pymongo.MongoClient('mongodb://hoppe:abc123@ds113765.mlab.com:13765/hoppe')
+# db = client['hoppe']
+# collection = db['hoppe']
+# items = [item for item in collection.find()]
+# pickle.dump(items, open('./data/hoppe.pkl', 'wb'))
+
+
+hoppe = pickle.load(open('./data/hoppe.pkl', 'rb'))
+print(len(hoppe))
