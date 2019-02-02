@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, request
-from search.searches import fulltext_search, lda_search, lsi_search
+from search.searches import fulltext_search, lda_search, lsi_search, flair_lstm_search, flair_pooling_search
 from flask_cors import CORS
 
 app = Flask(__name__)
@@ -14,7 +14,9 @@ def root():
     search = {
         'lda': lda_search,
         'lsi': lsi_search,
-        'fulltext': fulltext_search
+        'fulltext': fulltext_search,
+        'flair_pooling': flair_pooling_search,
+        'flair_lstm': flair_lstm_search
     }
 
     response = {

@@ -1,7 +1,24 @@
 import datetime
 import spacy
-nlp = spacy.load('de')
 
+from flair.embeddings import WordEmbeddings, FlairEmbeddings, DocumentPoolEmbeddings, DocumentLSTMEmbeddings, Sentence
+
+nlp = spacy.load('de')
+glove_embedding = WordEmbeddings('de')
+flair_embedding_forward = FlairEmbeddings('german-forward')
+flair_embedding_backward = FlairEmbeddings('german-backward')
+
+document_pooling_embeddings = DocumentPoolEmbeddings([
+    glove_embedding,
+    flair_embedding_backward,
+    flair_embedding_forward
+])
+
+document_lstm_embeddings = DocumentLSTMEmbeddings([
+    glove_embedding,
+    flair_embedding_backward,
+    flair_embedding_forward
+])
 
 def is_blacklisted(word):
     return word in [
@@ -56,3 +73,19 @@ def preprocess_after(doc):
 def get_named_entities(text):
     doc = nlp(text)
     return [(e.text, e.start_char, e.end_char, e.label_) for e in doc.ents]
+
+def get_lstm_embedding(document):
+    tokens = [token.text for token in nlp(document)]
+    text = ' '.join(tokens)
+    sentence = Sentence(text)
+    document_lstm_embeddings.embed(sentence)
+
+    return sentence.get_embedding().squeeze().tolist()    
+
+def get_pooling_embedding(document):
+    tokens = [token.text for token in nlp(document)]
+    text = ' '.join(tokens)
+    sentence = Sentence(text)
+    document_pooling_embeddings.embed(sentence)
+
+    return sentence.get_embedding().squeeze().tolist()

@@ -2,13 +2,15 @@ from spacy_preprocessing.preprocess import Preprocess
 
 from .data import texts, titles, ids, urls, mongo_collection
 from .models import id2word, lda_model, lsi_model, index
-from .preprocessing import preprocess_after, get_name_entities
+from .preprocessing import preprocess_after, get_named_entities, get_lstm_embedding, get_pooling_embedding
+from scipy.spatial.distance import cosine
 
 import pymongo
+import numpy as np
 
 
-def lda_search(word, max_results=10):
-    preprocess = Preprocess(word)
+def lda_search(query, max_results=10):
+    preprocess = Preprocess(query)
     query_preprocessed = preprocess_after(preprocess.preprocess(sentence_split=False, with_pos=False))
     query_bow = id2word.doc2bow(query_preprocessed)
     query_vec = lda_model[query_bow]
@@ -30,8 +32,8 @@ def lda_search(word, max_results=10):
     ]
 
 
-def lsi_search(word, max_results=10):
-    preprocess = Preprocess(word)
+def lsi_search(query, max_results=10):
+    preprocess = Preprocess(query)
     query_preprocessed = preprocess_after(preprocess.preprocess(sentence_split=False, with_pos=False))
     query_bow = id2word.doc2bow(query_preprocessed)
 
@@ -54,9 +56,9 @@ def lsi_search(word, max_results=10):
     ]
 
 
-def fulltext_search(word, max_results=10):
+def fulltext_search(query, max_results=10):
     results = mongo_collection.find( 
-        { '$text': { '$search': word, '$language': 'de' } },
+        { '$text': { '$search': query, '$language': 'de' } },
         { 'score': { '$meta': 'textScore' } }
     ).sort([
         ('score', { '$meta': 'textScore' })
@@ -73,3 +75,39 @@ def fulltext_search(word, max_results=10):
         }
         for result in results
     ]
+
+def flair_pooling_search(query, max_results=10):
+    cursor = mongo_collection.find({ 'text_pooling_embedding': { '$exists': True } })
+    query_embedding = get_pooling_embedding(query)
+
+    results = [
+        {
+            'id': str(record['_id']),
+            'score': cosine(query_embedding, record['text_pooling_embedding']) / 2.0,
+            'title': record['title'],
+            'text': record['text'],
+            'url': record['url']
+        }
+        for record in cursor
+    ]
+
+    results.sort(key=lambda x: x['score'], reverse=True)
+    return results[:max_results]
+
+def flair_lstm_search(query, max_results=10):
+    cursor = mongo_collection.find({ 'text_lstm_embedding': { '$exists': True } })
+    query_embedding = get_lstm_embedding(query)
+
+    results = [
+        {
+            'id': str(record['_id']),
+            'score': cosine(query_embedding, record['text_lstm_embedding']) / 2.0,
+            'title': record['title'],
+            'text': record['text'],
+            'url': record['url']
+        }
+        for record in cursor
+    ]
+
+    results.sort(key=lambda x: x['score'], reverse=True)
+    return results[:max_results]
