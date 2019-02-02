@@ -1,8 +1,10 @@
 from spacy_preprocessing.preprocess import Preprocess
 
-from .data import texts, titles, ids, urls
+from .data import texts, titles, ids, urls, mongo_collection
 from .models import id2word, lda_model, lsi_model, index
-from .preprocessing import preprocess_after
+from .preprocessing import preprocess_after, get_name_entities
+
+import pymongo
 
 
 def lda_search(word, max_results=10):
@@ -21,6 +23,7 @@ def lda_search(word, max_results=10):
             'score': float(result[1]),
             'title': result[3],
             'text': result[2],
+            'named_entities': get_named_entities(result[2]),
             'url': result[5]
         }
         for result in similarity_list[:max_results]
@@ -44,6 +47,7 @@ def lsi_search(word, max_results=10):
             'score': float(result[1]),
             'title': result[3],
             'text': result[2],
+            'named_entities': get_named_entities(result[2]),
             'url': result[5]
         }
         for result in similarity_list[:max_results]
@@ -51,4 +55,21 @@ def lsi_search(word, max_results=10):
 
 
 def fulltext_search(word, max_results=10):
-    return word
+    results = mongo_collection.find( 
+        { '$text': { '$search': word, '$language': 'de' } },
+        { 'score': { '$meta': 'textScore' } }
+    ).sort([
+        ('score', { '$meta': 'textScore' })
+    ]).limit(max_results)
+
+    return [
+        {
+            'id': str(result['_id']),
+            'score': float(result['score']),
+            'title': result['title'],
+            'text': result['text'],
+            'named_entities': get_named_entities(result['text']),
+            'url': result['url']
+        }
+        for result in results
+    ]

@@ -1,4 +1,6 @@
 import datetime
+import spacy
+nlp = spacy.load('de')
 
 
 def is_blacklisted(word):
@@ -49,3 +51,8 @@ def preprocess_after(doc):
            and not can_parse_num_int(word)
            and not can_parse_num_float(word)
     ]
+
+
+def get_named_entities(text):
+    doc = nlp(text)
+    return [(e.text, e.start_char, e.end_char, e.label_) for e in doc.ents]
