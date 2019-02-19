@@ -69,8 +69,8 @@ def fulltext_search(query, max_results=10):
             'id': str(result['_id']),
             'score': float(result['score']),
             'title': result['title'],
-            'text': result['text'],
-            'named_entities': get_named_entities(result['text']),
+            'text': result['text2'],
+            'named_entities': get_named_entities(result['text2']),
             'url': result['url']
         }
         for result in results

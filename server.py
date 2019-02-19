@@ -27,5 +27,5 @@ def root():
             'results': search[search_mode](query, max_results)
         }
     }
-        
+    
     return jsonify(response)
